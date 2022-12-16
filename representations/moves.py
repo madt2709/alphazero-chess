@@ -110,3 +110,45 @@ def encode_move(move: chess.Move()):
     counter = max(abs(dx), abs(dy))
 
     return move.from_square, direction_counter*7 + counter
+
+
+def decode_actions(encoded_actions):
+    """
+    A function to decode actions. 
+    Inputs:
+        - 64 x 73 array
+    Outputs:
+        - chess.Board().legal_moves
+    """
+    legal_moves = []
+    direction_converter = np.array([[-1, 1], [0, 1], [1, 1],
+                                    [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0]])
+    knight_converter = np.array([[-1, 2], [1, 2], [2, 1], [2, -1],
+                                 [1, -2], [-1, -2], [-2, -1], [-2, 1]])
+    underpromotion_converter = np.array([-1, 1], [0, 1], [1, 1])
+    for (i, j), value in np.ndenumerate(encoded_actions):
+        if value == 1:
+            start = np.array([chess.square_file(i), chess.square_rank(i)])
+            if j < 56:
+                length = j % 7
+                direction = 0
+                while direction*7 < j:
+                    direction += 1
+                end = start + direction_converter[direction] * length
+                move = chess.Move(i, chess.square(end[0], end[1]), chess.QUEEN)
+                legal_moves.append(move)
+            elif 56 <= j < 64:
+                direction = j % 8
+                end = start + knight_converter[direction]
+                move = chess.Move(i, chess.square(end[0], end[1]))
+                legal_moves.append(move)
+            else:
+                direction = j - 64 % 3
+                piece = 1
+                while 64 + 3*piece <= j:
+                    piece += 1
+                end = start + underpromotion_converter[direction]
+                move = chess.Move(i, chess.square(end[0], end[1], piece+1))
+                legal_moves.append(move)
+
+    return legal_moves
