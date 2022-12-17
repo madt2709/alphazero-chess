@@ -4,28 +4,28 @@ import chess
 import numpy as np
 
 
-def encode_actions(board: chess.Board()):
+def encode_actions(legal_moves: chess.Board().legal_moves):
     """
     A function to encode the set of legal moves in chess.Board().
     Input: 
-        - chess.Board()
+        - chess.Board().legal_moves
     Output:
-        - a 64 x 72 array where the 64 represents the piece to "pick up". 72 dimension is broken down into the following: 
-        56 represents possible "queen moves" for a piece. This is broken into number of squares [1,..,7] and the relative compass directions ["N", "NE", "E", ... , "NW"]. The first 7 entries will be 
+        - a 64 x 73 array where the 64 represents the piece to "pick up". 72 dimension is broken down into the following: 
+        56 represents possible "queen moves" for a piece. This is broken into number of squares [1,..,7] and the relative compass directions ["NW", "N", "NE", ... , "W"]. The first 7 entries will be 
         in ascending order of number of squares in "N" direction and then we will go clockwise through the directions. 
         8 features representing possible night moves going in clockwise order starting with move where horse goes 2 up and 1 to the side. 
         9 features for underpromotion to knight, bishop or rook. Any other promotion will be assumed to be a queen
     """
-    encoded = np.zeros([64, 73])
+    encoded = np.zeros([64, 73]).astype(int)
 
-    for move in board.legal_moves:
+    for move in legal_moves:
         start_square, repr = encode_move(move)
-        encoded[start_square][repr] == 1
+        encoded[start_square][repr] = 1
 
     return encoded
 
 
-def encode_move(move: chess.Move()):
+def encode_move(move):
     """A function to encode a move into one of the following representations: 
         56 represents possible "queen moves" for a piece. This is broken into number of squares [1,..,7] and the relative compass directions ["NW", "N", "NE", ... , "W"]. The first 7 entries will be 
         in ascending order of number of squares in "NW" direction and then we will go clockwise through the directions. 
@@ -35,7 +35,7 @@ def encode_move(move: chess.Move()):
         - chess.Move()
     Output:
         - start_square: piece starting square
-        - number between 1,..,73 according to the representation
+        - number between 0,..,72 according to the representation
     """
     uci = move.uci()
     direction_counter = 0
@@ -96,7 +96,7 @@ def encode_move(move: chess.Move()):
         return move.from_square, counter + direction_counter
 
     # check if move is underpromotion
-    if uci[-1] == "k":
+    if uci[-1] == "n":
         counter = 63
         return move.from_square, counter + direction_counter
     elif uci[-1] == "b":
@@ -107,7 +107,7 @@ def encode_move(move: chess.Move()):
         return move.from_square, counter + direction_counter
 
     # find length of move
-    counter = max(abs(dx), abs(dy))
+    counter = max(abs(dx), abs(dy)) - 1
 
     return move.from_square, direction_counter*7 + counter
 
@@ -121,34 +121,41 @@ def decode_actions(encoded_actions):
         - chess.Board().legal_moves
     """
     legal_moves = []
+    for (i, j), value in np.ndenumerate(encoded_actions):
+        if value == 1:
+            move = decode_move(i, j)
+            legal_moves.append(move)
+
+    return legal_moves
+
+
+def decode_move(start_square, move_type):
+    start = np.array([chess.square_file(start_square),
+                     chess.square_rank(start_square)])
     direction_converter = np.array([[-1, 1], [0, 1], [1, 1],
                                     [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0]])
     knight_converter = np.array([[-1, 2], [1, 2], [2, 1], [2, -1],
                                  [1, -2], [-1, -2], [-2, -1], [-2, 1]])
-    underpromotion_converter = np.array([-1, 1], [0, 1], [1, 1])
-    for (i, j), value in np.ndenumerate(encoded_actions):
-        if value == 1:
-            start = np.array([chess.square_file(i), chess.square_rank(i)])
-            if j < 56:
-                length = j % 7
-                direction = 0
-                while direction*7 < j:
-                    direction += 1
-                end = start + direction_converter[direction] * length
-                move = chess.Move(i, chess.square(end[0], end[1]), chess.QUEEN)
-                legal_moves.append(move)
-            elif 56 <= j < 64:
-                direction = j % 8
-                end = start + knight_converter[direction]
-                move = chess.Move(i, chess.square(end[0], end[1]))
-                legal_moves.append(move)
-            else:
-                direction = j - 64 % 3
-                piece = 1
-                while 64 + 3*piece <= j:
-                    piece += 1
-                end = start + underpromotion_converter[direction]
-                move = chess.Move(i, chess.square(end[0], end[1], piece+1))
-                legal_moves.append(move)
-
-    return legal_moves
+    underpromotion_converter = np.array([[-1, 1], [0, 1], [1, 1]])
+    if move_type < 56:
+        # note can't calculate length straight away since 7 is a value here.
+        co_ord = move_type % 7
+        length = co_ord + 1
+        direction = 0
+        while (direction+1)*7 <= move_type:
+            direction += 1
+        end = start + direction_converter[direction] * length
+        move = chess.Move(start_square, chess.square(
+            end[0], end[1]))
+    elif 56 <= move_type < 64:
+        direction = move_type % 8
+        end = start + knight_converter[direction]
+        move = chess.Move(start_square, chess.square(end[0], end[1]))
+    else:
+        direction = (move_type - 64) % 3
+        piece = 1
+        while 64 + 3*piece <= move_type:
+            piece += 1
+        end = start + underpromotion_converter[direction]
+        move = chess.Move(start_square, chess.square(end[0], end[1]), piece+1)
+    return move

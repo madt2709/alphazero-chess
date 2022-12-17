@@ -61,7 +61,7 @@ def decode_board(encoded_board):
     Output: 
         - chess.Board() with move stack
     """
-    # work out colour
+    # work out colour. Note we need the opposite colour to most recent position since at oldest step history, the color is inverse.
     colour = False if encoded_board[0][112] == 1 else True
 
     # check which is the oldest non-zero board.

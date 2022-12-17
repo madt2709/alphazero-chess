@@ -13,7 +13,7 @@ def encode_position(board: chess.Board()):
         - 64 x (6 + 6 + 2) array representing: 
         chessboard x (P1 piece + P2 piece + Repetitions)
     """
-    encoded = np.zeros([64, 14])
+    encoded = np.zeros([64, 14]).astype(int)
 
     # encode pieces
     for piece in chess.PIECE_TYPES:
