@@ -26,13 +26,11 @@ def encode_board(board: chess.Board()):
             encoded_position = encode_position(board_copy)
             for index, value in np.ndenumerate(encoded_position):
                 encoded[index[0]][index[1]+8*i] = value
-            board.pop()
+            if not ply_count - i == 0:
+                board_copy.pop()
 
     # add colour to encoding. Note 112 = 14*8
-    if board.turn:
-        colour = 1
-    else:
-        colour = 0
+    colour = 1 if board.turn else 0
     encoded[:, 112] = colour
 
     # add total move count
@@ -63,13 +61,17 @@ def decode_board(encoded_board):
     Output: 
         - chess.Board() with move stack
     """
+    # work out colour
+    colour = False if encoded_board[0][112] == 1 else True
+
     # check which is the oldest non-zero board.
     i = 7
     while not encoded_board[:, i*14:(i+1)*14].any():
         i -= 1
+        colour = not colour
 
     # create board with oldest position. Will make moves in order
-    board = decode_position(encoded_board[:, i*14:(i+1)*14])
+    board = decode_position(encoded_board[:, i*14:(i+1)*14], colour)
 
     # work out moves to get to most recent position
     while i >= 1:
