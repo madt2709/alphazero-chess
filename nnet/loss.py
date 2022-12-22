@@ -7,7 +7,7 @@ class AlphaLoss(nn.Module):
         self.mse = nn.MSELoss(reduction='sum')
         self.cross = nn.CrossEntropyLoss(reduction='sum')
 
-    def forward(self, y_v, value, y_p, policy):
+    def forward(self, y_p, policy, y_v, value):
         value_error = self.mse(y_v, value)
         policy_error = self.cross(y_p, policy)
         return policy_error + value_error

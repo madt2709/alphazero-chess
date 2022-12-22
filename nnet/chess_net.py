@@ -1,22 +1,8 @@
 # net used to train model. As a general rule, the default settings for convolution layers, residual layers have been used.
-
-import torch
 from torch import nn
-from torch.utils.data import Dataset
 import torch.nn.functional as F
 
-from .settings import NUMBER_OF_RES_LAYERS
-
-
-class BoardData(Dataset):
-    def __init__(self, dataset):
-        # dataset is an array containing (s, p, v).
-        super().__init__()
-        self.X = dataset[:, 0]
-        self.Y_p, self.Y_v = dataset[:, 1], dataset[:, 2]
-
-    def __getitem__(self, idx):
-        return self.X[idx], self.Y_p[idx], self.Y_v[idx]
+from settings import NUMBER_OF_RES_LAYERS
 
 
 class ConvBlock(nn.Module):
