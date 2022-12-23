@@ -25,10 +25,10 @@ class ResBlock(nn.Module):
         super(ResBlock, self).__init__()
         self.down_sample = down_sample
         self.conv1 = nn.Conv2d(in_channels, out_channels,
-                               kernel_size=3, stride=stride, bias=False)
+                               kernel_size=3, stride=stride, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(out_channels)
         self.conv2 = nn.Conv2d(out_channels, out_channels,
-                               kernel_size=3, stride=stride, bias=False)
+                               kernel_size=3, stride=stride, padding=1,  bias=False)
         self.bn2 = nn.BatchNorm2d(out_channels)
 
     def forward(self, x):
@@ -54,13 +54,13 @@ class OutBlock(nn.Module):
         # value head
         self.conv1_v = nn.Conv2d(256, 1, 1, stride=stride)
         self.bn1_v = nn.BatchNorm2d(1)
-        self.fc1_v = nn.Linear(64, 64)
+        self.fc1_v = nn.Linear(8*8, 64)
         self.fc2_v = nn.Linear(64, 1)
 
         # policy head
         self.conv1_p = nn.Conv2d(256, 2, 1, stride=stride)
         self.bn1_p = nn.BatchNorm2d(2)
-        self.fc1_p = nn.Linear(128, 1)
+        self.fc1_p = nn.Linear(8*8*128, 8*8*73)
 
     def forward(self, x):
         # value head
@@ -68,7 +68,7 @@ class OutBlock(nn.Module):
         out_v = self.conv1_v(out_v)
         out_v = self.bn1_v(out_v)
         out_v = F.relu(out_v)
-        out_v = out_v.view(-1, 64)  # batch size * number of squares
+        out_v = out_v.view(-1, 8*8)  # batch size * channels * height * width
         out_v = self.fc1_v(out_v)
         out_v = F.relu(out_v)
         out_v = self.fc2_v(out_v)
@@ -79,10 +79,10 @@ class OutBlock(nn.Module):
         out_p = self.conv1_p(out_p)
         out_p = self.bn1_p(out_p)
         out_p = F.relu(out_p)
-        out_p = out_p.view(-1, 64*128)
+        out_p = out_p.view(-1, 8*8*128)
         out_p = self.fc1_p(out_p)
 
-        return out_v, out_p
+        return out_p, out_v
 
 
 class ChessNet(nn.Module):
