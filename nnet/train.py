@@ -29,9 +29,9 @@ def train(nnet, lr, dataset, epoch_start=0, epoch_end=20):
         for idx, data in enumerate(train_loader):
             s, p, v = data
             if cuda:
-                s, p, v = s.cuda(), p.cuda(), v.cuda()
+                s, p, v = s.cuda().float(), p.cuda().float(), v.cuda().float()
             optimizer.zero_grad()
-            p_pred, v_pred = nnet(s)
-            loss = criterion(p_pred, p, v_pred, v)
+            p_pred, v_pred = nnet(s.float())
+            loss = criterion(p_pred, p.float(), v_pred, v.float())
             loss.backward()
             total_loss += loss.item()
