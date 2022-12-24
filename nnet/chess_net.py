@@ -100,7 +100,7 @@ class ChessNet(nn.Module):
     def forward(self, s):
         """
         Inputs:
-            - batch_of_game_states: batch_size x 119 x 8 x 8 tensor
+            - batch_of_game_states: batch_size x 73 x 8 x 8 tensor
         Outputs:
             - policy: batch size x (73*8*8) tensor
             - value: batch size x 1
