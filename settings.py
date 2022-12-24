@@ -10,3 +10,5 @@ L2_REGULARIZATION_PARAMETER = 10**(-4)
 LEARNING_RATE_SCHEDULE = {400: 10**(-2), 600: 10**(-3), sys.maxsize: 10**(-4)}
 # batch size to use in data loader
 BATCH_SIZE = 32
+# num of training games to play before training nnet
+NUM_OF_TRAINING_GAMES = 100

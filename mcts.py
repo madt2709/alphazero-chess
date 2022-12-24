@@ -158,7 +158,7 @@ def get_policy(node):
     return policy
 
 
-def self_play_one_game(num_of_search_iters, nnet, starting_position=chess.Board()):
+def self_play_one_game(nnet, num_of_search_iters=NUM_OF_MCTS_SEARCHES, starting_position=chess.Board()):
     """
     A function to play 1 training game.
     Inputs:
@@ -174,7 +174,7 @@ def self_play_one_game(num_of_search_iters, nnet, starting_position=chess.Board(
     dataset_v = []  # to add [s,p,v] once game is over
     board = starting_position.copy()
     while not board.outcome:
-        best_move, root = complete_one_mcts(NUM_OF_MCTS_SEARCHES, nnet, board)
+        best_move, root = complete_one_mcts(num_of_search_iters, nnet, board)
         policy = get_policy(root)
         dataset.append([root.s, policy])
         board.push(decode_move(best_move))
