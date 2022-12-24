@@ -52,15 +52,15 @@ class UCTNode():
         return exploration_rate*self.policy*math.sqrt(sum([sum(i) for i in self.child_number_of_visits]))/(1+self.child_number_of_visits)
 
     def best_child(self):
-        if self.action_idxs != []:
+        if self.legal_action_idxs != []:
             func_to_max = self.child_U + self.child_Q
             max_value = -10000
             max_idx = (-1, -1)
-            for i in self.action_idxs:
+            for i in self.legal_action_idxs:
                 if max_value < func_to_max[i]:
                     max_value = func_to_max[i]
                     max_idx = i
-        return i
+        return max_idx
 
     def check_if_child_node_exists(self, action_idx):
         return action_idx in self.children.keys()
@@ -76,7 +76,7 @@ class UCTNode():
         """
         # check if game has ended
         board = decode_board(self.s)
-        outcome = board.outcome
+        outcome = board.outcome()
         if outcome:
             if outcome.winner == board.turn:
                 self.total_value = 1
@@ -173,14 +173,14 @@ def self_play_one_game(nnet, num_of_search_iters=NUM_OF_MCTS_SEARCHES, starting_
     dataset = []  # to add [s,p] encountered
     dataset_v = []  # to add [s,p,v] once game is over
     board = starting_position.copy()
-    while not board.outcome:
+    while not board.outcome():
         best_move, root = complete_one_mcts(num_of_search_iters, nnet, board)
         policy = get_policy(root)
         dataset.append([root.s, policy])
         board.push(decode_move(best_move))
-    if board.outcome.winner == True:  # white win
+    if board.outcome().winner == True:  # white win
         v = 1
-    elif board.outcome.winner == False:
+    elif board.outcome().winner == False:
         v = -1
     else:
         v = 0

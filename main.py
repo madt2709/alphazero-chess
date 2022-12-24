@@ -14,3 +14,7 @@ def main():
         data = self_play_one_game(nnet=nnet)
         dataset += data
     train(nnet)
+
+
+if __name__ == '__main__':
+    main()
