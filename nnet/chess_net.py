@@ -1,5 +1,5 @@
 # net used to train model. As a general rule, the default settings for convolution layers, residual layers have been used.
-from torch import nn
+from torch import nn, tanh
 import torch.nn.functional as F
 
 from settings import NUMBER_OF_RES_LAYERS
@@ -58,8 +58,8 @@ class OutBlock(nn.Module):
         self.fc2_v = nn.Linear(64, 1)
 
         # policy head
-        self.conv1_p = nn.Conv2d(256, 2, 1, stride=stride)
-        self.bn1_p = nn.BatchNorm2d(2)
+        self.conv1_p = nn.Conv2d(256, 128, 1, stride=stride)
+        self.bn1_p = nn.BatchNorm2d(128)
         self.fc1_p = nn.Linear(8*8*128, 8*8*73)
 
     def forward(self, x):
@@ -72,7 +72,7 @@ class OutBlock(nn.Module):
         out_v = self.fc1_v(out_v)
         out_v = F.relu(out_v)
         out_v = self.fc2_v(out_v)
-        out_v = F.tanh(out_v)
+        out_v = tanh(out_v)
 
         # policy head
         out_p = x
@@ -86,6 +86,10 @@ class OutBlock(nn.Module):
 
 
 class ChessNet(nn.Module):
+    """
+    Nnet used to train engine. 
+    """
+
     def __init__(self):
         super(ChessNet, self).__init__()
         self.conv = ConvBlock()
@@ -94,6 +98,13 @@ class ChessNet(nn.Module):
         self.head = OutBlock()
 
     def forward(self, s):
+        """
+        Inputs:
+            - batch_of_game_states: batch_size x 119 x 8 x 8 tensor
+        Outputs:
+            - policy: batch size x (73*8*8) tensor
+            - value: batch size x 1
+        """
         out = self.conv(s)
         for i in range(NUMBER_OF_RES_LAYERS):
             out = getattr(self, f"res_{i+1}")(out)
