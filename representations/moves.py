@@ -15,14 +15,15 @@ def encode_actions(legal_moves: chess.Board().legal_moves):
         in ascending order of number of squares in "N" direction and then we will go clockwise through the directions. 
         8 features representing possible night moves going in clockwise order starting with move where horse goes 2 up and 1 to the side. 
         9 features for underpromotion to knight, bishop or rook. Any other promotion will be assumed to be a queen
+        This will however be converted to a 8*8*73 so that it is compatible with neural net output.
     """
-    encoded = np.zeros([8, 8, 73]).astype(int)
+    encoded = np.zeros([8, 8, 73]).astype(float)
 
     for move in legal_moves:
         square_file, square_rank, repr = encode_move(move)
         encoded[square_file][square_rank][repr] = 1
 
-    return encoded
+    return encoded.reshape(-1)
 
 
 def encode_move(move):
@@ -123,6 +124,7 @@ def decode_actions(encoded_actions):
     Outputs:
         - chess.Board().legal_moves
     """
+    encoded_actions = encoded_actions.reshape(8, 8, 73)
     legal_moves = []
     for (i, j, k), value in np.ndenumerate(encoded_actions):
         if value == 1:

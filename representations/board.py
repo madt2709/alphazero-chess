@@ -16,7 +16,7 @@ def encode_board(board: chess.Board()):
     The first 14 columns will be the board position at time t, the next 14 columns the board position at time t-1, etc..
     Once the 8 step history is complete, the extra variables will be added.
     """
-    encoded = np.zeros([8, 8, 119]).astype(int)
+    encoded = np.zeros([8, 8, 119]).astype(float)
 
     # encode historic boards. Make copy of board to safely remove from move stack
     ply_count = board.ply()

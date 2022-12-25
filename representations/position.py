@@ -14,7 +14,7 @@ def encode_position(board: chess.Board()):
         - 8 x 8 x (6 + 6 + 2) array representing: 
         square file x square rank x (P1 piece + P2 piece + Repetitions)
     """
-    encoded = np.zeros([8, 8, 14]).astype(int)
+    encoded = np.zeros([8, 8, 14]).astype(float)
 
     # encode pieces
     for piece in chess.PIECE_TYPES:

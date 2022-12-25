@@ -2,10 +2,12 @@ import chess
 import numpy as np
 import math
 import collections
+import torch
 
 from representations.moves import decode_move, encode_actions
 from representations.board import encode_board, decode_board
-from settings import NUM_OF_MCTS_SEARCHES
+from settings import NUM_OF_MCTS_SEARCHES, EXPLORATION_RATE
+import mcts
 
 
 class UCTNode():
@@ -24,10 +26,8 @@ class UCTNode():
         self.move = move
         self.parent = parent
         self.children = {}  # key = idx_of_action required to reach child node, value = child node
-        self.child_number_of_visits = np.zeros([64, 73]).astype(int)
-        self.child_total_value = np.zeros([64, 73]).astype(int)
-        self.legal_action_idxs = []  # store the idxs of legal actions of given state
-        # TO DO add the legal action idxs properly
+        self.child_number_of_visits = np.zeros([4672]).astype(int)
+        self.child_total_value = np.zeros([4672]).astype(int)
 
     @property
     def number_of_visits(self):
@@ -45,18 +45,27 @@ class UCTNode():
     def total_value(self, value):
         self.parent.child_total_value[self.move] = value
 
+    @property
+    def legal_actions(self):
+        # store the legal actions of given state
+        board = decode_board(self.s)
+        return encode_actions(board.legal_moves)
+
     def child_Q(self):
         return self.child_total_value / (self.child_number_of_visits + 1)
 
-    def child_U(self, exploration_rate):
-        return exploration_rate*self.policy*math.sqrt(sum([sum(i) for i in self.child_number_of_visits]))/(1+self.child_number_of_visits)
+    def child_U(self):
+        if type(self.parent) is mcts.DummyNode:
+            return np.zeros([4672]).astype(int)
+        else:
+            return EXPLORATION_RATE*get_policy(self.parent)*math.sqrt(sum([sum(i) for i in self.child_number_of_visits]))/(1+self.child_number_of_visits)
 
     def best_child(self):
-        if self.legal_action_idxs != []:
-            func_to_max = self.child_U + self.child_Q
-            max_value = -10000
-            max_idx = (-1, -1)
-            for i in self.legal_action_idxs:
+        func_to_max = self.child_U() + self.child_Q()
+        max_value = -10000
+        max_idx = None
+        for i, v in enumerate(self.legal_actions):
+            if v == 1:
                 if max_value < func_to_max[i]:
                     max_value = func_to_max[i]
                     max_idx = i
@@ -84,22 +93,22 @@ class UCTNode():
                 self.total_value = 0
             else:
                 self.total_value = -1
-            return -self.total_value, self
+            return -self.total_value
 
         # find action a which maximises U
         best_action = self.best_child()
 
         # check if child exists
-        if not self.check_if_child_node_exists():
+        if not self.check_if_child_node_exists(best_action):
             next_s = get_next_state(self.s, best_action)
             # create child
             self.children[best_action] = UCTNode(next_s, best_action, self)
             self.child_number_of_visits[best_action] += 1
             # predict
-            p_s, self.child_total_value[best_action] = nnet.predict(next_s)
-            return -self.child_total_value[best_action], self.children[best_action]
+            p_s, self.child_total_value[best_action] = nnet(next_s)
+            return -self.child_total_value[best_action]
         else:
-            child_v = self.children[best_action].search()
+            child_v = self.children[best_action].search(nnet)
             self.child_number_of_visits[best_action] += 1
             return self.children[best_action].search()
 
@@ -107,24 +116,25 @@ class UCTNode():
         current = self
         # use this to track the colour of the player's value being updated.
         counter = True
-        while current is not None:
-            current.parent.child_number_of_visits[self.move] += 1
+        while current.parent is not None:
+            current.child_number_of_visits[self.move] += 1
             if counter:
-                current.parent.total_value[self.move] += (1*value)
+                current.total_value += 1*value
             else:
-                current.parent.total_value[self.move] += (-1*value)
+                current.total_value += -1*value
             current = current.parent
             counter = not counter
 
 
 def get_next_state(s, action_idx):
-    move = decode_move(action_idx[0], action_idx[1])
+    unravel_idx = np.unravel_index(action_idx, [8, 8, 64])
+    move = decode_move(unravel_idx[0], unravel_idx[1], unravel_idx[2])
     board = decode_board(s)
     # make move
     board.push(move)
     # encode next board
     next_state = encode_board(board)
-    return next_state
+    return torch.from_numpy(next_state)
 
 
 class DummyNode():
@@ -139,7 +149,7 @@ class DummyNode():
 
 
 def complete_one_mcts(num_of_searches, nnet, starting_position=chess.Board()):
-    root = UCTNode(encode_board(starting_position),
+    root = UCTNode(torch.from_numpy(encode_board(starting_position)).float(),
                    move=None, parent=DummyNode())
     for i in range(num_of_searches):
         value = root.search(nnet)
@@ -151,10 +161,10 @@ def get_policy(node):
     """
     Function to get policy of a node. Should really only be called on root of searches
     """
-    policy = np.zeros(64, 73)
-    for idx, value in np.ndenumerate(node.child_number_of_visits):
-        policy[idx] = value / sum([sum(i)
-                                  for i in node.child_number_of_visits])
+    policy = np.zeros(8*8*73).astype(int)
+    for idx in np.where(node.child_number_of_visits != 0)[0]:
+        policy[idx] = node.child_number_of_visits[idx] / \
+            node.child_number_of_visits.sum()
     return policy
 
 

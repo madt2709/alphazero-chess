@@ -9,11 +9,13 @@ class ConvBlock(nn.Module):
     def __init__(self,  stride=1, padding=1):
         super(ConvBlock, self).__init__()
         self.action_size = 64*73
-        self.conv1 = nn.Conv2d(119, 256, 3, stride=stride, padding=padding)
+        self.conv1 = nn.Conv2d(119, 256, 3, stride=stride,
+                               padding=padding)
         self.bn1 = nn.BatchNorm2d(256)
 
     def forward(self, s):
         # batch size * board_features * board_squares * constant
+        s = s.float()  # should be caught before this but might as well check
         out = self.conv1(s.view(-1, 119, 8, 8))
         out = self.bn1(out)
         s = F.relu(out)
