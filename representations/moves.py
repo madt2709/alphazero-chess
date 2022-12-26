@@ -120,7 +120,7 @@ def decode_actions(encoded_actions):
     """
     A function to decode actions. 
     Inputs:
-        - 8 x 8 x 73 array
+        - 8*8*73 array
     Outputs:
         - chess.Board().legal_moves
     """

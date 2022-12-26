@@ -108,9 +108,8 @@ class UCTNode():
             p_s, self.child_total_value[best_action] = nnet(next_s)
             return -self.child_total_value[best_action]
         else:
-            child_v = self.children[best_action].search(nnet)
             self.child_number_of_visits[best_action] += 1
-            return self.children[best_action].search()
+            return self.children[best_action].search(nnet)
 
     def backpropogate(self, value):
         current = self
@@ -127,11 +126,13 @@ class UCTNode():
 
 
 def get_next_state(s, action_idx):
-    unravel_idx = np.unravel_index(action_idx, [8, 8, 64])
+    unravel_idx = np.unravel_index(action_idx, [8, 8, 73])
     move = decode_move(unravel_idx[0], unravel_idx[1], unravel_idx[2])
-    board = decode_board(s)
+    board = decode_board(s.numpy())
     # make move
     board.push(move)
+    print(move)
+    print(board)
     # encode next board
     next_state = encode_board(board)
     return torch.from_numpy(next_state)
@@ -152,6 +153,7 @@ def complete_one_mcts(num_of_searches, nnet, starting_position=chess.Board()):
     root = UCTNode(torch.from_numpy(encode_board(starting_position)).float(),
                    move=None, parent=DummyNode())
     for i in range(num_of_searches):
+        print(f"{i} search complete")
         value = root.search(nnet)
         root.backpropogate(value)
     return np.argmax(root.child_number_of_visits), root

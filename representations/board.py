@@ -64,54 +64,50 @@ def decode_board(encoded_board):
     # work out colour. Note we need the opposite colour to most recent position since at oldest step history, the color is inverse.
     colour = False if encoded_board[0][0][112] == 1 else True
 
-    # check which is the oldest non-zero board.
-    i = 7
+    # check which is the newest non-zero board.
+    i = 0
     while not encoded_board[:, :, i*14:(i+1)*14].any():
-        i -= 1
+        i += 1
         colour = not colour
 
     # create board with oldest position. Will make moves in order
     board = decode_position(encoded_board[:, :, i*14:(i+1)*14], colour)
 
-    # work out moves to get to most recent position
-    while i >= 1:
-        start_square, end_square, final_piece = find_difference_between_encoded_positions(
-            encoded_board[:, :, i*14:(i+1)*14], encoded_board[:, :, (i-1)*14:i*14])
-        board.push(chess.Move(start_square, end_square, final_piece))
-        i -= 1
+    # this is really CPU intensive will skip for now.
+    # # work out moves to get to most recent position
+    # while i >= 1:
+    #     start_file, start_rank, end_file, end_rank, final_piece = find_difference_between_encoded_positions(
+    #         encoded_board[:, :, i*14:(i+1)*14], encoded_board[:, :, (i-1)*14:i*14])
+    #     board.push(chess.Move(chess.square(start_file, start_rank),
+    #                chess.square(end_file, end_rank), final_piece))
+    #     i -= 1
 
     return board
 
 
-def find_difference_between_encoded_positions(encoded_start_position, encoded_end_position):
-    """
-    A function which takes a start encoded position and an end encoded position and returns the coordinates of the move diff
-    """
-    difference = encoded_end_position - encoded_start_position
+# def find_difference_between_encoded_positions(encoded_start_position, encoded_end_position):
+#     """
+#     A function which takes a start encoded position and an end encoded position and returns the coordinates of the move diff
+#     """
+#     difference = encoded_end_position - encoded_start_position
+#     # looking for plane in difference where there is 1. note pieces are only added to a position in the future so the only way to get a 1 is by a piece moving there.
+#     # initialise with negative numbers to make check easy. Track final piece in case of promotion
+#     start_square, end_square, final_piece = None, None, None
+#     while not start_square or not end_square or not final_piece:
+#         for (i, j, k), value in np.ndenumerate(difference[:, :, :12]):
+#             if value == 1:
+#                 end_file, end_rank, final_piece = i, j, k
+#             if value == -1:
+#                 start_file, start_rank = i, j
 
-    # looking for plane in difference where there is 1. note pieces are only added to a position in the future so the only way to get a 1 is by a piece moving there.
-    # initialise with negative numbers to make check easy. Track final piece in case of promotion
-    start_square, end_square, final_piece = -1, -1, -1
-    while True:
-        for i in range(12):
-            for j in range(8):
-                for k in range(8):
-                    if difference[j][k][i] == 1:
-                        end_file, end_rank, piece = j, k, i
-                    elif difference[j][k][i] == -1:
-                        start_file, start_rank = j, k
-                # check if we have the relevant data
-                if start_square >= 0 and end_square >= 0 and final_piece >= 0:
-                    break
+#     # check we are not in edge case of rook making castling move
+#     if final_piece == 4 | 10 and (((start_file, start_rank), (end_file, end_rank))) == ((0, 0), (3, 0)) or ((7, 0), (4, 0)) or ((0, 7), (3, 7)) or ((7, 7), (4, 7)):
+#         # check if king has also moved. If yes, then update the start square, end square and final piece
+#         for i in range(8):
+#             for j in range(8):
+#                 if difference[i][j][final_piece + 2] == 1:
+#                     end_file, end_rank, final_piece = i, j, final_piece + 2
+#                 elif difference[i][j][final_piece + 2] == -1:
+#                     start_file, start_rank = i, j
 
-    # check we are not in edge case of rook making castling move
-    if final_piece == 4 | 10 and (((start_file, start_rank), (end_file, end_rank))) == ((0, 0), (3, 0)) or ((7, 0), (4, 0)) or ((0, 7), (3, 7)) or ((7, 7), (4, 7)):
-        # check if king has also moved. If yes, then update the start square, end square and final piece
-        for i in range(8):
-            for j in range(8):
-                if difference[i][j][final_piece + 2] == 1:
-                    end_file, end_rank, piece = i, j, final_piece + 2
-                elif difference[i][j][final_piece + 2] == -1:
-                    start_file, start_rank = i, j
-
-    return start_file, start_rank, end_file, end_rank, final_piece
+#     return start_file, start_rank, end_file, end_rank, final_piece

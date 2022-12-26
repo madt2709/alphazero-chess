@@ -4,7 +4,7 @@ import numpy as np
 from pytest_lazyfixture import lazy_fixture
 
 from representations.position import encode_position, decode_position
-from representations.board import encode_board, decode_board
+from representations.board import encode_board, decode_board, find_difference_between_encoded_positions
 from representations.moves import encode_move, encode_actions, decode_actions, decode_move
 
 # TODO - add more tests
@@ -71,7 +71,12 @@ def encoded_e2d3():
 def starting_board_legal_moves():
     return chess.Board().legal_moves
 
-# TO DO improve these tests
+
+@pytest.fixture
+def encoded_e2e4_played_board():
+    board = chess.Board()
+    board.push_san('e2e4')
+    return encode_board(board)
 
 
 @pytest.fixture
@@ -158,3 +163,14 @@ def test_encode_actions(raw, encoded):
 def test_decode_actions(raw, encoded):
     assert set([move.uci() for move in decode_actions(encoded)]) == set([
         move.uci() for move in raw])
+
+
+@pytest.mark.parametrize(
+    "start_position, end_position, move", [
+        (lazy_fixture('encoded_starting_board'),
+         lazy_fixture('encoded_e2e4_played_board'), [4, 1, 4, 3, 1])
+    ]
+)
+def test_find_difference_between_encoded_positions(start_position, end_position, move):
+    assert all([a == b] for a, b in zip(
+        find_difference_between_encoded_positions(start_position, end_position), move))
