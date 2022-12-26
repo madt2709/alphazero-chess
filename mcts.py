@@ -48,7 +48,7 @@ class UCTNode():
     @property
     def legal_actions(self):
         # store the legal actions of given state
-        board = decode_board(self.s)
+        board = decode_board(self.s.numpy())
         return encode_actions(board.legal_moves)
 
     def child_Q(self):
@@ -58,7 +58,7 @@ class UCTNode():
         if type(self.parent) is mcts.DummyNode:
             return np.zeros([4672]).astype(int)
         else:
-            return EXPLORATION_RATE*get_policy(self.parent)*math.sqrt(sum([sum(i) for i in self.child_number_of_visits]))/(1+self.child_number_of_visits)
+            return EXPLORATION_RATE*get_policy(self.parent)*math.sqrt(sum(self.child_number_of_visits))/(1+self.child_number_of_visits)
 
     def best_child(self):
         func_to_max = self.child_U() + self.child_Q()
@@ -84,7 +84,7 @@ class UCTNode():
         Note we return the negative value becaue we expect the next search to be from perspective of other player.
         """
         # check if game has ended
-        board = decode_board(self.s)
+        board = decode_board(self.s.numpy())
         outcome = board.outcome()
         if outcome:
             if outcome.winner == board.turn:
@@ -131,8 +131,6 @@ def get_next_state(s, action_idx):
     board = decode_board(s.numpy())
     # make move
     board.push(move)
-    print(move)
-    print(board)
     # encode next board
     next_state = encode_board(board)
     return torch.from_numpy(next_state)
@@ -153,7 +151,6 @@ def complete_one_mcts(num_of_searches, nnet, starting_position=chess.Board()):
     root = UCTNode(torch.from_numpy(encode_board(starting_position)).float(),
                    move=None, parent=DummyNode())
     for i in range(num_of_searches):
-        print(f"{i} search complete")
         value = root.search(nnet)
         root.backpropogate(value)
     return np.argmax(root.child_number_of_visits), root
@@ -174,7 +171,7 @@ def self_play_one_game(nnet, num_of_search_iters=NUM_OF_MCTS_SEARCHES, starting_
     """
     A function to play 1 training game.
     Inputs:
-        - num_of-search_iters: this is used to know how many iterations the MCTS algo should perform before picking the best move
+        - num_of_search_iters: this is used to know how many iterations the MCTS algo should perform before picking the best move
         - nnet: neural net used to evaluate a position
         - starting_position: the starting position of the training games
     Outputs: 
@@ -186,10 +183,13 @@ def self_play_one_game(nnet, num_of_search_iters=NUM_OF_MCTS_SEARCHES, starting_
     dataset_v = []  # to add [s,p,v] once game is over
     board = starting_position.copy()
     while not board.outcome():
+        print(board)
         best_move, root = complete_one_mcts(num_of_search_iters, nnet, board)
+        bm_start_file, bm_start_rank, bm_move_type = np.unravel_index(best_move, [
+                                                                      8, 8, 73])
         policy = get_policy(root)
         dataset.append([root.s, policy])
-        board.push(decode_move(best_move))
+        board.push(decode_move(bm_start_file, bm_start_rank, bm_move_type))
     if board.outcome().winner == True:  # white win
         v = 1
     elif board.outcome().winner == False:
@@ -198,5 +198,5 @@ def self_play_one_game(nnet, num_of_search_iters=NUM_OF_MCTS_SEARCHES, starting_
         v = 0
     for idx, data in enumerate(dataset):
         s, p = data
-        dataset.append([s, p, v])
+        dataset_v.append([s, p, v])
     return dataset_v

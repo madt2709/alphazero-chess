@@ -45,7 +45,8 @@ def train(nnet, lr, dataset, epoch_start=0, epoch_end=20):
                     f"Epoch {epoch + 1}/{epoch_end+1} complete. Total loss is {total_loss/10}.")
                 losses_per_batch.append(total_loss)
                 total_loss = 0
-        avg_loss_per_epoch.append(sum(losses_per_batch)/len(losses_per_batch))
+        avg_loss_per_epoch.append(
+            sum(losses_per_batch)/(len(losses_per_batch)+1))
 
     # add graph
     fig = plt.figure()
@@ -55,5 +56,6 @@ def train(nnet, lr, dataset, epoch_start=0, epoch_end=20):
     ax.set_ylabel("Loss per batch")
     ax.set_title("Loss vs Epoch")
     print('Finished Training')
+
     plt.savefig(os.path.join("./model_data/", "Loss_vs_Epoch_%s.png" %
                 datetime.datetime.today().strftime("%Y-%m-%d")))

@@ -4,7 +4,7 @@ import numpy as np
 from pytest_lazyfixture import lazy_fixture
 
 from representations.position import encode_position, decode_position
-from representations.board import encode_board, decode_board, find_difference_between_encoded_positions
+from representations.board import encode_board, decode_board
 from representations.moves import encode_move, encode_actions, decode_actions, decode_move
 
 # TODO - add more tests
@@ -80,6 +80,20 @@ def encoded_e2e4_played_board():
 
 
 @pytest.fixture
+def encoded_e2e4_played_position():
+    board = chess.Board()
+    board.push_san('e2e4')
+    return encode_position(board)
+
+
+@pytest.fixture
+def e2e4_played_board():
+    board = chess.Board()
+    board.push_san('e2e4')
+    return board
+
+
+@pytest.fixture
 def encoded_starting_board_legal_moves():
     return encode_actions(chess.Board().legal_moves)
 
@@ -94,11 +108,11 @@ def test_encode_position(raw, encoded):
 
 
 @pytest.mark.parametrize(
-    "encoded,raw", [(lazy_fixture('encoded_starting_position'),
-                     lazy_fixture('starting_board'))]
+    "encoded,raw, colour", [(lazy_fixture('encoded_starting_position'),
+                             lazy_fixture('starting_board'), chess.WHITE), (lazy_fixture('encoded_e2e4_played_position'), lazy_fixture('e2e4_played_board'), chess.BLACK)]
 )
-def test_decode_position(encoded, raw):
-    assert decode_position(encoded, chess.WHITE) == raw
+def test_decode_position(encoded, raw, colour):
+    assert decode_position(encoded, colour) == raw
 
 
 @pytest.mark.parametrize(
@@ -113,7 +127,9 @@ def test_encode_board(encoded, raw):
 @pytest.mark.parametrize(
     "encoded, raw", [
         (lazy_fixture('encoded_starting_board'),
-         lazy_fixture('starting_board'))
+         lazy_fixture('starting_board')),
+        (lazy_fixture('encoded_e2e4_played_board'),
+         lazy_fixture('e2e4_played_board'))
     ]
 )
 def test_decode_board(encoded, raw):
@@ -164,13 +180,12 @@ def test_decode_actions(raw, encoded):
     assert set([move.uci() for move in decode_actions(encoded)]) == set([
         move.uci() for move in raw])
 
-
-@pytest.mark.parametrize(
-    "start_position, end_position, move", [
-        (lazy_fixture('encoded_starting_board'),
-         lazy_fixture('encoded_e2e4_played_board'), [4, 1, 4, 3, 1])
-    ]
-)
-def test_find_difference_between_encoded_positions(start_position, end_position, move):
-    assert all([a == b] for a, b in zip(
-        find_difference_between_encoded_positions(start_position, end_position), move))
+# @pytest.mark.parametrize(
+#     "start_position, end_position, move", [
+#         (lazy_fixture('encoded_starting_board'),
+#          lazy_fixture('encoded_e2e4_played_board'), [4, 1, 4, 3, 1])
+#     ]
+# )
+# def test_find_difference_between_encoded_positions(start_position, end_position, move):
+#     assert all([a == b] for a, b in zip(
+#         find_difference_between_encoded_positions(start_position, end_position), move))

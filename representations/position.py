@@ -56,4 +56,5 @@ def decode_position(encoded_position, colour):
                     pieces_dict[square(i, j)] = chess.Piece(k+1, not colour)
 
     board.set_piece_map(pieces_dict)
+    board.turn = colour
     return board

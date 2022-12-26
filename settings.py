@@ -1,7 +1,7 @@
 import sys
 
 NUMBER_OF_RES_LAYERS = 16
-NUM_OF_MCTS_SEARCHES = 750
+NUM_OF_MCTS_SEARCHES = 10
 L2_REGULARIZATION_PARAMETER = 10**(-4)
 # learning rate is as follows:
 # - for first 400k iterations: lr = 10**(-2)

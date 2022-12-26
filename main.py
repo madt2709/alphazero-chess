@@ -13,7 +13,7 @@ def main():
     for i in range(NUM_OF_TRAINING_GAMES):
         data = self_play_one_game(nnet=nnet)
         dataset += data
-    train(nnet)
+    train(nnet, 0.9, dataset)
 
 
 if __name__ == '__main__':
