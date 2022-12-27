@@ -42,7 +42,7 @@ def train(nnet, lr, dataset, epoch_start=0, epoch_end=20):
             total_loss += loss.item()
             if idx % 10 == 9:
                 print(
-                    f"Epoch {epoch + 1}/{epoch_end+1} complete. Total loss is {total_loss/10}.")
+                    f"Epoch {epoch + 1}/{epoch_end} complete. Total loss is {total_loss/10}.")
                 losses_per_batch.append(total_loss)
                 total_loss = 0
         avg_loss_per_epoch.append(

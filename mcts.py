@@ -104,10 +104,6 @@ class UCTNode():
                 self.total_value = -1
             return -self.total_value
 
-        # add some noise to the root node
-        if type(self.parent) is mcts.DummyNode:
-            self.add_dirichlet_noise()
-
         # find action a which maximises U
         best_action = self.best_child()
 
@@ -164,6 +160,7 @@ class DummyNode():
 def complete_one_mcts(num_of_searches, nnet, starting_position=chess.Board()):
     root = UCTNode(torch.from_numpy(encode_board(starting_position)).float(),
                    move=None, parent=DummyNode())
+    root.add_dirichlet_noise()
     for i in range(num_of_searches):
         value = root.search(nnet)
         root.backpropogate(value)
