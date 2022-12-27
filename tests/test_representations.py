@@ -48,6 +48,11 @@ def e2d3():
 
 
 @pytest.fixture
+def h7h8r():
+    return chess.Move(chess.H7, chess.H8, chess.ROOK)
+
+
+@pytest.fixture
 def encoded_e2e4():
     return chess.square_file(chess.E2), chess.square_rank(chess.E2), 8
 
@@ -65,6 +70,11 @@ def encoded_g1f3():
 @pytest.fixture
 def encoded_e2d3():
     return chess.square_file(chess.E2), chess.square_rank(chess.E2), 0
+
+
+@pytest.fixture
+def encoded_h7h8r():
+    return chess.square_file(chess.H7), chess.square_rank(chess.H7), 71
 
 
 @pytest.fixture
@@ -95,7 +105,7 @@ def e2e4_played_board():
 
 @pytest.fixture
 def encoded_starting_board_legal_moves():
-    return encode_actions(chess.Board().legal_moves)
+    return encode_actions(chess.Board().legal_moves, chess.WHITE)
 
 
 @pytest.mark.parametrize(
@@ -137,47 +147,48 @@ def test_decode_board(encoded, raw):
 
 
 @pytest.mark.parametrize(
-    "raw, encoded", [
-        (lazy_fixture('e2e4'), lazy_fixture('encoded_e2e4')),
-        (lazy_fixture('g7g8n'), lazy_fixture('encoded_g7g8n')),
-        (lazy_fixture('g1f3'), lazy_fixture('encoded_g1f3')),
-        (lazy_fixture('e2d3'), lazy_fixture('encoded_e2d3'))
+    "raw, encoded, turn", [
+        (lazy_fixture('e2e4'), lazy_fixture('encoded_e2e4'), chess.WHITE),
+        (lazy_fixture('g7g8n'), lazy_fixture('encoded_g7g8n'), chess.WHITE),
+        (lazy_fixture('g1f3'), lazy_fixture('encoded_g1f3'), chess.WHITE),
+        (lazy_fixture('e2d3'), lazy_fixture('encoded_e2d3'), chess.WHITE),
+        (lazy_fixture('h7h8r'), lazy_fixture('encoded_h7h8r'), chess.WHITE)
     ]
 )
-def test_encode_move(encoded, raw):
-    assert all([a == b] for a, b in zip(encode_move(raw), encoded))
+def test_encode_move(encoded, raw, turn):
+    assert all([a == b] for a, b in zip(encode_move(raw, turn), encoded))
 
 
 @pytest.mark.parametrize(
-    "raw, encoded", [
-        (lazy_fixture('e2e4'), lazy_fixture('encoded_e2e4')),
-        (lazy_fixture('g7g8n'), lazy_fixture('encoded_g7g8n')),
-        (lazy_fixture('g1f3'), lazy_fixture('encoded_g1f3')),
-        (lazy_fixture('e2d3'), lazy_fixture('encoded_e2d3'))
+    "raw, encoded, turn", [
+        (lazy_fixture('e2e4'), lazy_fixture('encoded_e2e4'), chess.WHITE),
+        (lazy_fixture('g7g8n'), lazy_fixture('encoded_g7g8n'), chess.WHITE),
+        (lazy_fixture('g1f3'), lazy_fixture('encoded_g1f3'), chess.WHITE),
+        (lazy_fixture('e2d3'), lazy_fixture('encoded_e2d3'), chess.WHITE)
     ]
 )
-def test_decode_move(encoded, raw):
-    assert raw == decode_move(encoded[0], encoded[1], encoded[2])
+def test_decode_move(encoded, raw, turn):
+    assert raw == decode_move(encoded[0], encoded[1], encoded[2], turn)
 
 
 @pytest.mark.parametrize(
-    "raw, encoded", [
+    "raw, encoded, turn", [
         (lazy_fixture('starting_board_legal_moves'),
-         lazy_fixture('encoded_starting_board_legal_moves'))
+         lazy_fixture('encoded_starting_board_legal_moves'), chess.WHITE)
     ]
 )
-def test_encode_actions(raw, encoded):
-    assert all([a == b] for a, b in zip(encode_actions(raw), encoded))
+def test_encode_actions(raw, encoded, turn):
+    assert all([a == b] for a, b in zip(encode_actions(raw, turn), encoded))
 
 
 @pytest.mark.parametrize(
-    "raw, encoded", [
+    "raw, encoded, turn", [
         (lazy_fixture('starting_board_legal_moves'),
-         lazy_fixture('encoded_starting_board_legal_moves'))
+         lazy_fixture('encoded_starting_board_legal_moves'), chess.WHITE)
     ]
 )
-def test_decode_actions(raw, encoded):
-    assert set([move.uci() for move in decode_actions(encoded)]) == set([
+def test_decode_actions(raw, encoded, turn):
+    assert set([move.uci() for move in decode_actions(encoded, turn)]) == set([
         move.uci() for move in raw])
 
 # @pytest.mark.parametrize(

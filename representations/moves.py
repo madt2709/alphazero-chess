@@ -4,13 +4,13 @@ import chess
 import numpy as np
 
 
-def encode_actions(legal_moves: chess.Board().legal_moves):
+def encode_actions(legal_moves: chess.Board().legal_moves, turn):
     """
     A function to encode the set of legal moves in chess.Board().
     Input: 
         - chess.Board().legal_moves
     Output:
-        - a 8 x 8 x 73 array where the 8 x 8 represents the piece to "pick up". 72 dimension is broken down into the following: 
+        - a 8 x 8 x 73 array where the 8 x 8 represents the piece to "pick up". 73 dimension is broken down into the following: 
         56 represents possible "queen moves" for a piece. This is broken into number of squares [1,..,7] and the relative compass directions ["NW", "N", "NE", ... , "W"]. The first 7 entries will be 
         in ascending order of number of squares in "N" direction and then we will go clockwise through the directions. 
         8 features representing possible night moves going in clockwise order starting with move where horse goes 2 up and 1 to the side. 
@@ -20,13 +20,13 @@ def encode_actions(legal_moves: chess.Board().legal_moves):
     encoded = np.zeros([8, 8, 73]).astype(float)
 
     for move in legal_moves:
-        square_file, square_rank, repr = encode_move(move)
+        square_file, square_rank, repr = encode_move(move, turn=turn)
         encoded[square_file][square_rank][repr] = 1
 
     return encoded.reshape(-1)
 
 
-def encode_move(move):
+def encode_move(move, turn):
     """A function to encode a move into one of the following representations: 
         56 represents possible "queen moves" for a piece. This is broken into number of squares [1,..,7] and the relative compass directions ["NW", "N", "NE", ... , "W"]. The first 7 entries will be 
         in ascending order of number of squares in "NW" direction and then we will go clockwise through the directions. 
@@ -34,6 +34,7 @@ def encode_move(move):
         9 features for underpromotion to knight, bishop or rook. Any other promotion will be assumed to be a queen. Will do knight promotions in order ["NW", "N", "NE"] then bishop and finally rook. 
     Input: 
         - chess.Move()
+        - colour: who's turn it is to play. Changes the relative orientation.
     Output:
         - start_file: piece starting file
         - start_rank: piece starting rank
@@ -53,6 +54,12 @@ def encode_move(move):
 
     # work out direction
     dx, dy = x_end - x_start, y_end - y_start
+
+    # change sign if colour is black
+    if turn == chess.BLACK:
+        dx = -dx
+        dy = -dy
+
     if dx == - dy and dy > 0:
         # NW
         direction_counter = 0
@@ -99,24 +106,24 @@ def encode_move(move):
         # identified type of move + direction so can return at this point
         return start_file, start_rank, counter + direction_counter
 
-    # check if move is underpromotion
-    if uci[-1] == "n":
-        counter = 63
-        return start_file, start_rank, counter + direction_counter
-    elif uci[-1] == "b":
-        counter = 66
-        return start_file, start_rank, counter + direction_counter
-    elif uci[-1] == "r":
-        counter = 69
-        return start_file, start_rank, counter + direction_counter
-
     # find length of move
     counter = max(abs(dx), abs(dy)) - 1
+
+    # check if move is underpromotion
+    if uci[-1] == "n":
+        counter = 64
+        return start_file, start_rank, counter + direction_counter
+    elif uci[-1] == "b":
+        counter = 67
+        return start_file, start_rank, counter + direction_counter
+    elif uci[-1] == "r":
+        counter = 70
+        return start_file, start_rank, counter + direction_counter
 
     return start_file, start_rank, direction_counter*7 + counter
 
 
-def decode_actions(encoded_actions):
+def decode_actions(encoded_actions, turn):
     """
     A function to decode actions. 
     Inputs:
@@ -128,18 +135,23 @@ def decode_actions(encoded_actions):
     legal_moves = []
     for (i, j, k), value in np.ndenumerate(encoded_actions):
         if value == 1:
-            move = decode_move(i, j, k)
+            move = decode_move(i, j, k, turn)
             legal_moves.append(move)
 
     return legal_moves
 
 
-def decode_move(start_file, start_rank, move_type):
+def decode_move(start_file, start_rank, move_type, turn):
     direction_converter = np.array([[-1, 1], [0, 1], [1, 1],
                                     [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0]])
     knight_converter = np.array([[-1, 2], [1, 2], [2, 1], [2, -1],
                                  [1, -2], [-1, -2], [-2, -1], [-2, 1]])
     underpromotion_converter = np.array([[-1, 1], [0, 1], [1, 1]])
+
+    if turn == chess.BLACK:
+        direction_converter = - direction_converter
+        knight_converter = - knight_converter
+        underpromotion_converter = - underpromotion_converter
     if move_type < 56:
         # note can't calculate length straight away since 7 is a value here.
         co_ord = move_type % 7

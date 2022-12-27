@@ -26,8 +26,9 @@ class UCTNode():
         self.move = move
         self.parent = parent
         self.children = {}  # key = idx_of_action required to reach child node, value = child node
-        self.child_number_of_visits = np.zeros([4672]).astype(int)
-        self.child_total_value = np.zeros([4672]).astype(int)
+        self.child_priors = np.zeros([4672]).astype(float)
+        self.child_number_of_visits = np.zeros([4672]).astype(float)
+        self.child_total_value = np.zeros([4672]).astype(float)
 
     @property
     def number_of_visits(self):
@@ -49,27 +50,35 @@ class UCTNode():
     def legal_actions(self):
         # store the legal actions of given state
         board = decode_board(self.s.numpy())
-        return encode_actions(board.legal_moves)
+        legal_actions = encode_actions(board.legal_moves, board.turn)
+        return np.where(legal_actions == 1)[0]
 
     def child_Q(self):
         return self.child_total_value / (self.child_number_of_visits + 1)
 
     def child_U(self):
         if type(self.parent) is mcts.DummyNode:
-            return np.zeros([4672]).astype(int)
+            return np.zeros([4672]).astype(float)
         else:
-            return EXPLORATION_RATE*get_policy(self.parent)*math.sqrt(sum(self.child_number_of_visits))/(1+self.child_number_of_visits)
+            return math.sqrt(self.number_of_visits) * (
+                abs(self.child_priors) / (1 + self.child_number_of_visits))
+
+    def add_dirichlet_noise(self):
+        noise = np.random.default_rng().dirichlet(
+            np.zeros([len(self.legal_actions)], dtype=np.float32)+0.3)
+        for i, value in enumerate(self.legal_actions):
+            self.child_priors[value] = 0.75 * \
+                self.child_priors[value] + 0.25*noise[i]
 
     def best_child(self):
         func_to_max = self.child_U() + self.child_Q()
         max_value = -10000
-        max_idx = None
-        for i, v in enumerate(self.legal_actions):
-            if v == 1:
-                if max_value < func_to_max[i]:
-                    max_value = func_to_max[i]
-                    max_idx = i
-        return max_idx
+        max_idx = -1
+        for idx in self.legal_actions:
+            if func_to_max[idx] > max_value:
+                max_idx = idx
+                max_value = func_to_max[idx]
+        return idx
 
     def check_if_child_node_exists(self, action_idx):
         return action_idx in self.children.keys()
@@ -94,6 +103,10 @@ class UCTNode():
             else:
                 self.total_value = -1
             return -self.total_value
+
+        # add some noise to the root node
+        if type(self.parent) is mcts.DummyNode:
+            self.add_dirichlet_noise()
 
         # find action a which maximises U
         best_action = self.best_child()
@@ -127,8 +140,9 @@ class UCTNode():
 
 def get_next_state(s, action_idx):
     unravel_idx = np.unravel_index(action_idx, [8, 8, 73])
-    move = decode_move(unravel_idx[0], unravel_idx[1], unravel_idx[2])
     board = decode_board(s.numpy())
+    move = decode_move(
+        unravel_idx[0], unravel_idx[1], unravel_idx[2], board.turn)
     # make move
     board.push(move)
     # encode next board
@@ -184,12 +198,14 @@ def self_play_one_game(nnet, num_of_search_iters=NUM_OF_MCTS_SEARCHES, starting_
     board = starting_position.copy()
     while not board.outcome():
         print(board)
+        print(board.fen())
         best_move, root = complete_one_mcts(num_of_search_iters, nnet, board)
         bm_start_file, bm_start_rank, bm_move_type = np.unravel_index(best_move, [
                                                                       8, 8, 73])
         policy = get_policy(root)
         dataset.append([root.s, policy])
-        board.push(decode_move(bm_start_file, bm_start_rank, bm_move_type))
+        board.push(decode_move(bm_start_file,
+                   bm_start_rank, bm_move_type, board.turn))
     if board.outcome().winner == True:  # white win
         v = 1
     elif board.outcome().winner == False:
