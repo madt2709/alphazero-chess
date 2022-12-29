@@ -3,6 +3,7 @@ import numpy as np
 import math
 import collections
 import torch
+import random
 
 from representations.moves import decode_move, encode_actions
 from representations.board import encode_board, decode_board
@@ -78,6 +79,8 @@ class UCTNode():
             if func_to_max[idx] > max_value:
                 max_idx = idx
                 max_value = func_to_max[idx]
+            elif func_to_max[idx] == max_value:
+                max_idx = random.choice([idx, max_idx])
         return idx
 
     def check_if_child_node_exists(self, action_idx):
@@ -92,6 +95,7 @@ class UCTNode():
             - total_value: value determined by MCTS algo
         Note we return the negative value becaue we expect the next search to be from perspective of other player.
         """
+        cuda = torch.cuda.is_available()
         # check if game has ended
         board = decode_board(self.s.numpy())
         outcome = board.outcome()
@@ -115,6 +119,9 @@ class UCTNode():
             self.child_number_of_visits[best_action] += 1
             # predict
             p_s, self.child_total_value[best_action] = nnet(next_s)
+            if cuda:
+                p_s, self.child_total_value[best_action] = p_s.cuda().float(
+                ), self.child_total_value[best_action].cuda().float()
             return -self.child_total_value[best_action]
         else:
             self.child_number_of_visits[best_action] += 1

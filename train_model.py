@@ -1,0 +1,22 @@
+import torch
+
+from nnet.chess_net import ChessNet
+from nnet.train import train
+from mcts import self_play_one_game
+from settings import NUM_OF_TRAINING_GAMES, NUM_OF_BATCHES
+
+
+def train_model(nnet, path,  num_of_training_games=NUM_OF_TRAINING_GAMES):
+    """
+    Function to complete one sequence of the neural net training process. 
+    The process is as follows: 
+        - Play NUM_OF_TRAINING_GAMES with nnet provided. 
+        - Train the nnet with the games played
+        - Save the model to the path provided
+    """
+    dataset = []
+    for i in range(num_of_training_games):
+        data = self_play_one_game(nnet=nnet)
+        dataset += data
+    train(nnet, 0.9, dataset)
+    torch.save(nnet.state_dict(), path)

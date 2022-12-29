@@ -37,6 +37,9 @@ def train(nnet, lr, dataset, epoch_start=0, epoch_end=20):
             optimizer.zero_grad()
             # p_pred = Torch.Size([batch_size,73*8*8]), v_pred = Torch.Size([batch_size,1])
             p_pred, v_pred = nnet(s.float())
+            # I don't think this next step is necessary but doesn't hurt to check
+            if cuda:
+                p_pred, v_pred = p_pred.cuda().float(), v_pred.cuda().float()
             loss = criterion(p_pred, p.float(), v_pred, v.float())
             loss.backward()
             total_loss += loss.item()
