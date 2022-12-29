@@ -98,6 +98,14 @@ class ChessNet(nn.Module):
         for i in range(NUMBER_OF_RES_LAYERS):
             setattr(self, f"res_{i+1}", ResBlock())
         self.head = OutBlock()
+        self.apply(self._init_weights)
+
+    # initialize weights with normal distribution of mean 0 and std 1
+    def _init_weights(self, module):
+        if isinstance(module, nn.Linear):
+            module.weight.data.normal_(mean=0.0, std=1.0)
+            if module.bias is not None:
+                module.bias.data.zero_()
 
     def forward(self, s):
         """
