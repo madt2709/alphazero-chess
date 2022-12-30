@@ -7,8 +7,10 @@ import numpy as np
 def encode_actions(legal_moves: chess.Board().legal_moves, turn):
     """
     A function to encode the set of legal moves in chess.Board().
+
     Input: 
         - chess.Board().legal_moves
+
     Output:
         - a 8 x 8 x 73 array where the 8 x 8 represents the piece to "pick up". 73 dimension is broken down into the following: 
         56 represents possible "queen moves" for a piece. This is broken into number of squares [1,..,7] and the relative compass directions ["NW", "N", "NE", ... , "W"]. The first 7 entries will be 
@@ -32,9 +34,11 @@ def encode_move(move, turn):
         in ascending order of number of squares in "NW" direction and then we will go clockwise through the directions. 
         8 features representing possible night moves going in clockwise order starting with move where horse goes 2 up and 1 to the left. 
         9 features for underpromotion to knight, bishop or rook. Any other promotion will be assumed to be a queen. Will do knight promotions in order ["NW", "N", "NE"] then bishop and finally rook. 
+
     Input: 
         - chess.Move()
         - colour: who's turn it is to play. Changes the relative orientation.
+
     Output:
         - start_file: piece starting file
         - start_rank: piece starting rank

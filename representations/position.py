@@ -37,9 +37,11 @@ def encode_position(board: chess.Board()):
 def decode_position(encoded_position, colour):
     """
     A function to decode an encoded position into a chess.Board() position
+
     Input: 
         - 8 x 8 x (6 + 6 + 2) array representing: 
         chessboard x (P1 piece + P2 piece + Repetitions)
+
     Output: 
         -chess.Board() with no move stack.
 

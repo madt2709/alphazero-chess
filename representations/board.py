@@ -8,8 +8,10 @@ from representations.position import encode_position, decode_position
 def encode_board(board: chess.Board()):
     """
     A function to encode a board into an object the nnet can process
+
     Input: 
         - chess.Board()
+
     Output: 
         - 8 x 8 x ((6 + 6 + 2) x 8 + 1 x 1 x 2 x 2 x 1) array representing in order: 
         chessboard x (P1 piece x P2 piece x Repetitions x 8-step history + colour x total move count x P1 castling x P2 castling x no progress count)
@@ -55,9 +57,11 @@ def encode_board(board: chess.Board()):
 def decode_board(encoded_board):
     """
     A function to decode an encoded board into a chess.Board() with move stack
+
     Input: 
         - 8 x 8 x ((6 + 6 + 2) x 8 + 1 x 1 x 2 x 2 x 1) array representing in order: 
         chessboard x (P1 piece x P2 piece x Repetitions x 8-step history + colour x total move count x P1 castling x P2 castling x no progress count)
+
     Output: 
         - chess.Board() with move stack
     """

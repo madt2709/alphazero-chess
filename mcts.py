@@ -27,7 +27,8 @@ class UCTNode():
         self.move = move
         self.parent = parent
         self.children = {}  # key = idx_of_action required to reach child node, value = child node
-        self.child_priors = np.zeros([4672]).astype(float)
+        self.child_priors = np.zeros([4672]).astype(
+            float)  # store previous prediction of nnet
         self.child_number_of_visits = np.zeros([4672]).astype(float)
         self.child_total_value = np.zeros([4672]).astype(float)
 
@@ -115,13 +116,21 @@ class UCTNode():
         if not self.check_if_child_node_exists(best_action):
             next_s = get_next_state(self.s, best_action)
             # create child
-            self.children[best_action] = UCTNode(next_s, best_action, self)
-            self.child_number_of_visits[best_action] += 1
+            child = UCTNode(next_s, best_action, self)
             # predict
             p_s, self.child_total_value[best_action] = nnet(next_s)
-            if cuda:
-                p_s, self.child_total_value[best_action] = p_s.cuda().float(
-                ), self.child_total_value[best_action].cuda().float()
+            # assign p_s to child priors removing any values for illegal moves
+            p_s = p_s.detach().cpu().numpy().reshape(-1)
+            for idx in range(len(p_s)):
+                if idx not in child.legal_actions:
+                    p_s[idx] = 0.0
+            child.child_priors = p_s
+            # add dirichlet noise to root node
+            if child.parent.parent == None:
+                child.add_dirichlet_noise()
+            # assign to child
+            self.children[best_action] = child
+            self.child_number_of_visits[best_action] += 1
             return -self.child_total_value[best_action]
         else:
             self.child_number_of_visits[best_action] += 1
@@ -167,7 +176,6 @@ class DummyNode():
 def complete_one_mcts(num_of_searches, nnet, starting_position=chess.Board()):
     root = UCTNode(torch.from_numpy(encode_board(starting_position)).float(),
                    move=None, parent=DummyNode())
-    root.add_dirichlet_noise()
     for i in range(num_of_searches):
         value = root.search(nnet)
         root.backpropogate(value)
@@ -188,10 +196,12 @@ def get_policy(node):
 def self_play_one_game(nnet, num_of_search_iters=NUM_OF_MCTS_SEARCHES, starting_position=chess.Board()):
     """
     A function to play 1 training game.
+
     Inputs:
         - num_of_search_iters: this is used to know how many iterations the MCTS algo should perform before picking the best move
         - nnet: neural net used to evaluate a position
         - starting_position: the starting position of the training games
+
     Outputs: 
         - a list where each entry is [s,p,v] for each of the states, policy and values encountered in the training game. 
         Note values are updated to match game outcome.
