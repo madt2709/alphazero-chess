@@ -6,7 +6,7 @@ from mcts import self_play_one_game
 from settings import NUM_OF_TRAINING_GAMES
 
 
-def train_model(nnet, path,  num_of_training_games=NUM_OF_TRAINING_GAMES):
+def train_model(nnet, num_of_training_games=NUM_OF_TRAINING_GAMES):
     """
     Function to complete one sequence of the neural net training process.
 
@@ -25,4 +25,3 @@ def train_model(nnet, path,  num_of_training_games=NUM_OF_TRAINING_GAMES):
         data = self_play_one_game(nnet=nnet)
         dataset += data
     train(nnet, 0.9, dataset)
-    torch.save(nnet.state_dict(), path)

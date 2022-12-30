@@ -212,7 +212,6 @@ def self_play_one_game(nnet, num_of_search_iters=NUM_OF_MCTS_SEARCHES, starting_
     board = starting_position.copy()
     while not board.outcome():
         print(board)
-        print(board.fen())
         best_move, root = complete_one_mcts(num_of_search_iters, nnet, board)
         bm_start_file, bm_start_rank, bm_move_type = np.unravel_index(best_move, [
                                                                       8, 8, 73])
@@ -229,4 +228,5 @@ def self_play_one_game(nnet, num_of_search_iters=NUM_OF_MCTS_SEARCHES, starting_
     for idx, data in enumerate(dataset):
         s, p = data
         dataset_v.append([s, p, v])
+    print(f"Game complete")
     return dataset_v
