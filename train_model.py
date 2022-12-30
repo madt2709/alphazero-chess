@@ -3,7 +3,7 @@ import torch
 from nnet.chess_net import ChessNet
 from nnet.train import train
 from mcts import self_play_one_game
-from settings import NUM_OF_TRAINING_GAMES, NUM_OF_BATCHES
+from settings import NUM_OF_TRAINING_GAMES
 
 
 def train_model(nnet, path,  num_of_training_games=NUM_OF_TRAINING_GAMES):
