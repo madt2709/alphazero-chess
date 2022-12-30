@@ -76,13 +76,18 @@ class UCTNode():
         func_to_max = self.child_U() + self.child_Q()
         max_value = -10000
         max_idx = -1
+        eq_values = []
         for idx in self.legal_actions:
             if func_to_max[idx] > max_value:
                 max_idx = idx
                 max_value = func_to_max[idx]
+                eq_values = []
             elif func_to_max[idx] == max_value:
-                max_idx = random.choice([idx, max_idx])
-        return idx
+                eq_values.append(idx)
+        if eq_values != []:
+            eq_values.append(max_idx)
+            max_idx = random.choice(eq_values)
+        return max_idx
 
     def check_if_child_node_exists(self, action_idx):
         return action_idx in self.children.keys()
@@ -212,6 +217,7 @@ def self_play_one_game(nnet, num_of_search_iters=NUM_OF_MCTS_SEARCHES, starting_
     board = starting_position.copy()
     while not board.outcome():
         print(board)
+        print("/n")
         best_move, root = complete_one_mcts(num_of_search_iters, nnet, board)
         bm_start_file, bm_start_rank, bm_move_type = np.unravel_index(best_move, [
                                                                       8, 8, 73])
