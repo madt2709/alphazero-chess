@@ -16,3 +16,7 @@ def pipeline(num_of_training_cycles=NUM_OF_TRAINING_CYCLES, nnet_params_path=Non
         path = f"model_params_after_{i}_cycles.pt"
         train_model(nnet)
         torch.save(nnet.state_dict(), base_path + path)
+
+
+if __name__ == "__main__":
+    pipeline()
