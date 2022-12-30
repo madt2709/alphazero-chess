@@ -223,6 +223,10 @@ def self_play_one_game(nnet, num_of_search_iters=NUM_OF_MCTS_SEARCHES, starting_
                                                                       8, 8, 73])
         policy = get_policy(root)
         dataset.append([root.s, policy])
+        move = decode_move(bm_start_file,
+                           bm_start_rank, bm_move_type, board.turn)
+        if board.piece_at(move.from_square) == 1 and (board.turn, chess.square_rank(move.from_square)) in [(True, 6), (False, 1)] and move.promotion == None:
+            move.promotion = chess.QUEEN
         board.push(decode_move(bm_start_file,
                    bm_start_rank, bm_move_type, board.turn))
     if board.outcome().winner == True:  # white win
