@@ -1,6 +1,6 @@
 import sys
 
-NUMBER_OF_RES_LAYERS = 16
+NUMBER_OF_RES_LAYERS = 4
 NUM_OF_MCTS_SEARCHES = 10
 L2_REGULARIZATION_PARAMETER = 10**(-4)
 # learning rate is as follows:
@@ -11,6 +11,6 @@ LEARNING_RATE_SCHEDULE = {400: 10**(-2), 600: 10**(-3), sys.maxsize: 10**(-4)}
 # batch size to use in data loader
 BATCH_SIZE = 32
 # num of training games to play before training nnet
-NUM_OF_TRAINING_GAMES = 10
+NUM_OF_TRAINING_GAMES = 3
 EXPLORATION_RATE = 1
 NUM_OF_TRAINING_CYCLES = 10
