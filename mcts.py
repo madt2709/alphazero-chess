@@ -156,10 +156,10 @@ class UCTNode():
 
 
 def get_next_state(s, action_idx):
-    unravel_idx = np.unravel_index(action_idx, [8, 8, 73])
+    i, j, k = np.unravel_index(action_idx, [8, 8, 73])
     board = decode_board(s.numpy())
     move = decode_move(
-        unravel_idx[0], unravel_idx[1], unravel_idx[2], board.turn)
+        i, j, k, board.turn)
     # make move
     board.push(move)
     # encode next board
