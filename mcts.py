@@ -101,7 +101,6 @@ class UCTNode():
             - total_value: value determined by MCTS algo
         Note we return the negative value becaue we expect the next search to be from perspective of other player.
         """
-        cuda = torch.cuda.is_available()
         # check if game has ended
         board = decode_board(self.s.numpy())
         outcome = board.outcome()
@@ -161,6 +160,8 @@ def get_next_state(s, action_idx):
     move = decode_move(
         i, j, k, board.turn)
     # make move
+    if board.piece_at(move.from_square) == 1 and (board.turn, chess.square_rank(move.from_square)) in [(True, 6), (False, 1)] and move.promotion == None:
+        move.promotion = chess.QUEEN
     board.push(move)
     # encode next board
     next_state = encode_board(board)
