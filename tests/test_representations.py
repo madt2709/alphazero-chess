@@ -7,8 +7,6 @@ from representations.position import encode_position, decode_position
 from representations.board import encode_board, decode_board
 from representations.moves import encode_move, encode_actions, decode_actions, decode_move
 
-# TODO - add more tests
-
 
 @pytest.fixture
 def starting_board():
