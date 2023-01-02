@@ -74,13 +74,15 @@ def decode_board(encoded_board):
     # retrieve castling rights
     fen = ''
     if encoded_board[0][0][114] == 1:
-        fen.append('K' if board.turn else 'k')
+        fen += 'K' if board.turn else 'k'
     if encoded_board[0][0][115] == 1:
-        fen.append('Q' if board.turn else 'q')
+        fen += 'Q' if board.turn else 'q'
     if encoded_board[0][0][116] == 1:
-        fen.append('k' if board. turn else 'K')
+        fen += 'k' if board. turn else 'K'
     if encoded_board[0][0][117] == 1:
-        fen.append('q' if board.turn else 'Q')
+        fen += 'q' if board.turn else 'Q'
+    if not board.turn:
+        fen = fen[::-1]
     board.set_castling_fen(fen)
 
     return board
