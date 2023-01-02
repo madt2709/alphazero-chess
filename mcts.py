@@ -229,12 +229,16 @@ def self_play_one_game(nnet, num_of_search_iters=NUM_OF_MCTS_SEARCHES, starting_
             move.promotion = chess.QUEEN
         board.push(decode_move(bm_start_file,
                    bm_start_rank, bm_move_type, board.turn))
+    print(board)
     if board.outcome().winner == True:  # white win
         v = 1
+        print("White win")
     elif board.outcome().winner == False:
         v = -1
+        print("Black win")
     else:
         v = 0
+        print("Draw")
     for idx, data in enumerate(dataset):
         s, p = data
         dataset_v.append([s, p, v])

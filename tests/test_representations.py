@@ -19,8 +19,6 @@ def starting_board():
 def encoded_starting_position():
     return encode_position(chess.Board())
 
-# TO DO improve these tests
-
 
 @pytest.fixture
 def encoded_starting_board():

@@ -44,8 +44,6 @@ def decode_position(encoded_position, colour):
 
     Output: 
         -chess.Board() with no move stack.
-
-    TO DO: set up repetitions.
     """
     pieces_dict = {}
     board = chess.Board()
