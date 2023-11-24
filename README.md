@@ -39,5 +39,4 @@ You can follow the games on the terminal as they are played. Model parameters wi
 
 - Currently, there is no multi-processing functionality. However, this could be added fairly easily and would aid the training process.
 - Extend the test coverage
-- Code readiblity (wrote all myself with no reviews)
-- etc...
+- many other things...
